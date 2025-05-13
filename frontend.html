@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PhishGuardian - AI Phishing Detection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #1e1e2f;
+            color: #f0f0f0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            border-radius: 1rem;
+            color: #f0f0f0;
+        }
+
+        .icon {
+            font-size: 1.2rem;
+            margin-right: 0.5rem;
+        }
+
+        .form-control {
+            background-color: #1c1c2a;
+            color: #f0f0f0;
+            border: 1px solid #444;
+            border-radius: 0.6rem;
+        }
+
+        .form-control::placeholder {
+            color: #aaa;
+        }
+
+        .btn {
+            transition: all 0.3s ease;
+            border-radius: 0.6rem;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .progress {
+            height: 22px;
+            border-radius: 0.4rem;
+            overflow: hidden;
+        }
+
+        .footer {
+            color: #bbb;
+        }
+
+        .spinner {
+            display: none;
+        }
+
+        .prediction-phishing {
+            color: #ffc107;
+            /* Warning/Phishing color */
+            font-weight: bold;
+        }
+
+        .prediction-safe {
+            color: #28a745;
+            /* Success/Safe color */
+            font-weight: bold;
+        }
+
+        .url-result {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 0.4rem;
+        }
+
+        .url-phishing {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .url-safe {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .error-message {
+            color: #dc3545;
+            /* Danger/Error color */
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="gradient-header py-4 text-center">
+        <h1 class="display-5">
+            🔐 PhishGuardian
+        </h1>
+        <p class="lead mb-0">AI-powered phishing detection for emails and URLs</p>
+    </header>
+
+    <main class="container my-5">
+
+        <div class="card mb-4 p-4">
+            <h4>
+                <i class="bi bi-envelope-fill icon"></i>Analyze Email Content
+            </h4>
+            <form id="emailForm">
+                <div class="mb-3">
+                    <textarea class="form-control mt-2" rows="5" name="email_text"
+                        placeholder="Paste suspicious email content here..."></textarea>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="analyzeEmail()">
+                    <i class="bi bi-search"></i> Analyze Email
+                </button>
+                <div id="emailResult" class="mt-3">
+                    </div>
+            </form>
+        </div>
+
+        <div class="card mb-4 p-4">
+            <h4>
+                <i class="bi bi-link-45deg icon"></i>Analyze URL
+            </h4>
+            <form id="urlForm">
+                <div class="mb-3">
+                    <input type="text" class="form-control mt-2" name="url_input"
+                        placeholder="Enter suspicious URL (e.g., http://example.com)" autocomplete="off">
+                </div>
+                <button type="button" class="btn btn-success" onclick="analyzeURL()">
+                    <i class="bi bi-shield-check"></i> Analyze URL
+                </button>
+                <div id="urlResult" class="mt-3">
+                    </div>
+            </form>
+        </div>
+
+        <div id="errorContainer" class="mt-3">
+            </div>
+
+    </main>
+
+    <footer class="text-center py-4 footer">
+        PhishGuardian v1.1 — Securing the Web with AI 🧠🔐
+    </footer>
+
+    <script>
+        async function analyzeEmail() {
+            const form = document.getElementById('emailForm');
+            const emailText = form.querySelector('[name="email_text"]').value;
+            const resultDiv = document.getElementById('emailResult');
+            const errorContainer = document.getElementById('errorContainer');
+
+            // Show a loading indicator (optional)
+            resultDiv.innerHTML = "<p>Analyzing email...</p>";
+            errorContainer.innerHTML = ""; // Clear previous errors
+
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `email_text=${encodeURIComponent(emailText)}`
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json(); // Assuming your backend returns JSON
+
+                if (data.error) {
+                    errorContainer.innerHTML = `<div class="alert alert-danger error-message">${data.error}</div>`;
+                    resultDiv.innerHTML = ""; // Clear any previous result
+                } else {
+                    let resultHTML = "";
+                    if (data.prediction) {
+                        if (data.prediction === 'phishing') {
+                            resultHTML +=
+                                "<i class='bi bi-exclamation-triangle-fill text-warning'></i> This email appears <strong class='prediction-phishing'>phishy</strong> ⚠️<br>";
+                        } else if (data.prediction === 'ham') {
+                            resultHTML +=
+                                "<i class='bi bi-check-circle-fill text-success'></i> This email appears <strong class='prediction-safe'>safe</strong> ✅<br>";
+                        } else {
+                            resultHTML +=
+                                "<i class='bi bi-x-octagon-fill text-danger'></i> Error during analysis.<br>";
+                        }
+                    }
+
+                    if (data.urls && data.urls.length > 0) {
+                        resultHTML += "<strong>URLs Found:</strong><br>";
+                        data.urls.forEach(url => {
+                            const resultClass = url.result === 'phishing' ? 'url-phishing' : 'url-safe';
+                            const predictionClass = url.result === 'phishing' ? 'prediction-phishing' :
+                                'prediction-safe';
+                            resultHTML +=
+                                `<div class='url-result ${resultClass}'>${url.url} - <strong class='${predictionClass}'>${url.result}</strong></div>`;
+                        });
+                    }
+
+                    resultDiv.innerHTML = resultHTML;
+                }
+
+            } catch (error) {
+                errorContainer.innerHTML = `<div class="alert alert-danger error-message">Error: ${error.message}</div>`;
+                resultDiv.innerHTML = "";
+            }
+        }
+
+        async function analyzeURL() {
+            const form = document.getElementById('urlForm');
+            const urlInput = form.querySelector('[name="url_input"]').value;
+            const resultDiv = document.getElementById('urlResult');
+            const errorContainer = document.getElementById('errorContainer');
+
+            // Show a loading indicator (optional)
+            resultDiv.innerHTML = "<p>Analyzing URL...</p>";
+            errorContainer.innerHTML = ""; // Clear previous errors
+
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `url_input=${encodeURIComponent(urlInput)}`
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json(); // Assuming your backend returns JSON
+
+                if (data.error) {
+                    errorContainer.innerHTML = `<div class="alert alert-danger error-message">${data.error}</div>`;
+                    resultDiv.innerHTML = "";
+                } else if (data.urls && data.urls.length > 0) {
+                    let resultHTML = "";
+                    data.urls.forEach(url => {
+                        const resultClass = url.result === 'phishing' ? 'url-phishing' : 'url-safe';
+                        const predictionClass = url.result === 'phishing' ? 'prediction-phishing' :
+                            'prediction-safe';
+                        resultHTML +=
+                            `<div class='url-result ${resultClass}'>${url.url} - <strong class='${predictionClass}'>${url.result}</strong></div>`;
+                    });
+                    resultDiv.innerHTML = resultHTML;
+                } else {
+                    resultDiv.innerHTML = "<p>No results found.</p>";
+                }
+
+            } catch (error) {
+                errorContainer.innerHTML = `<div class="alert alert-danger error-message">Error: ${error.message}</div>`;
+                resultDiv.innerHTML = "";
+            }
+        }
+    </script>
+
+</body>
+
+</html>
