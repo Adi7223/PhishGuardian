@@ -1,4 +1,4 @@
-PhishGuardian
+🛡️ PhishGuardian: AI-Based Phishing Detection – Summary
 PhishGuardian is an AI-powered web application designed to detect phishing emails by analyzing both email content and embedded URLs. Built using Python, Flask, and Scikit-learn, it integrates two machine learning models:
 
 TF-IDF + Logistic Regression for email content
@@ -15,4 +15,5 @@ Aditya Gupta – adityaarav21@gmail.com
 
 Sagar Dalal – sagardalal2004@gmail.com
 
-Markanday Joshi – Markanday03@gmail.com (SGT University, Gurugram)
+Markanday Joshi – Markanday03@gmail.com
+(SGT University, Gurugram)
